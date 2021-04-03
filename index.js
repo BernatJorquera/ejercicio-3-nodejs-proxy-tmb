@@ -1,12 +1,10 @@
 require("dotenv").config();
-const fs = require("fs");
 const express = require("express");
 const chalk = require("chalk");
 const fetch = require("node-fetch");
 const { program } = require("commander");
 const morgan = require("morgan");
-// eslint-disable-next-line import/no-unresolved
-const lineasJson = fs.existsSync("./lineas.json") ? require("./lineas.json") : "";
+const correspondenciasIdLinea = require("./correspondenciasIdLinea.json");
 
 const urlLineas = `${process.env.TMB_API_URL}?app_id=${process.env.TMB_APP_ID}&app_key=${process.env.TMB_APP_KEY}`;
 
@@ -18,6 +16,21 @@ const fetchLineas = async () => {
     linea: feature.properties.NOM_LINIA,
     descripcion: feature.properties.DESC_LINIA
   }));
+  return respuesta;
+};
+
+const fetchParadas = async (id) => {
+  const urlParadas = `${process.env.TMB_API_URL}/${id}/estacions?app_id=${process.env.TMB_APP_ID}&app_key=${process.env.TMB_APP_KEY}`;
+  const resp = await fetch(urlParadas);
+  const paradas = await resp.json();
+  const respuesta = {
+    linea: paradas.features[0].properties.NOM_LINIA,
+    descripcion: paradas.features[0].properties.DESC_SERVEI,
+    paradas: paradas.features.map(feature => ({
+      id: feature.properties.ORDRE_ESTACIO,
+      nombre: feature.properties.NOM_ESTACIO
+    })).sort((p1, p2) => p1.id - p2.id)
+  };
   return respuesta;
 };
 
@@ -45,5 +58,16 @@ app.get("/metro/lineas", async (req, res, next) => {
   const respuesta = await fetchLineas();
   res.json(respuesta);
 });
-
-/* hacer redirect desde /L10N a /id_linia10 */
+app.get("/metro/linea/:id", async (req, res, next) => {
+  const { id } = req.params;
+  if (id.includes("L")) {
+    const corr = correspondenciasIdLinea.filter(corr => corr.linea === id);
+    if (corr.length === 0) {
+      /* redirect a error, linea introducida no existe o algo asi */
+    }
+    res.redirect(`/metro/linea/${corr[0].id}`);
+    return;
+  }
+  const respuesta = await fetchParadas(id);
+  res.json(respuesta);
+});
