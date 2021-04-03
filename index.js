@@ -63,11 +63,28 @@ app.get("/metro/linea/:id", async (req, res, next) => {
   if (id.includes("L")) {
     const corr = correspondenciasIdLinea.filter(corr => corr.linea === id);
     if (corr.length === 0) {
-      /* redirect a error, linea introducida no existe o algo asi */
+      res.status(404).json({ error: true, mensaje: "No se ha encontrado la línea introducida" });
+      return;
     }
     res.redirect(`/metro/linea/${corr[0].id}`);
     return;
   }
   const respuesta = await fetchParadas(id);
   res.json(respuesta);
+});
+app.put("/*", (req, res, next) => {
+  res.status(403).json({ error: true, mensaje: "Te pensabas que podías hackearme" });
+});
+app.post("/*", (req, res, next) => {
+  res.status(403).json({ error: true, mensaje: "Te pensabas que podías hackearme" });
+});
+app.delete("/*", (req, res, next) => {
+  res.status(403).json({ error: true, mensaje: "Te pensabas que podías hackearme" });
+});
+app.use((req, res, next) => {
+  res.status(404).json({ error: true, mensaje: "Recurso no encontrado" });
+});
+app.use((err, req, res, next) => {
+  console.log(err);
+  res.status(500).send({ error: true, mensaje: "Error general" });
 });
