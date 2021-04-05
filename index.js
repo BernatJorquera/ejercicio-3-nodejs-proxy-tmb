@@ -60,8 +60,9 @@ app.get("/metro/lineas", async (req, res, next) => {
 });
 app.get("/metro/linea/:id", async (req, res, next) => {
   const { id } = req.params;
-  if (id.includes("L")) {
-    const corr = correspondenciasIdLinea.filter(corr => corr.linea === id);
+  console.log(id.toUpperCase().includes("L"));
+  if (id.toUpperCase().includes("L")) {
+    const corr = correspondenciasIdLinea.filter(corr => corr.linea === id.toUpperCase());
     if (corr.length === 0) {
       res.status(404).json({ error: true, mensaje: "No se ha encontrado la línea introducida" });
       return;
